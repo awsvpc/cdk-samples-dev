@@ -1,0 +1,11 @@
+[local-user]
+aws_access_key_id = AKIA...
+aws_secret_access_key = ...
+
+[dev]
+role_arn = arn:aws:iam::111111111111:role/CDKDeployRole
+source_profile = local-user
+region = us-east-1
+Now:
+
+cdk deploy Postgres-dev --profile dev
