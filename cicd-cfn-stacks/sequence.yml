@@ -1,0 +1,10 @@
+      - name: Deploy all stacks in order
+        run: |
+          echo "Deploying base_stack"
+          bash scripts/deploy_stack.sh "base-stack" "cfn/base_stack.yml" "cfn/parameters/base_params.json" "Environment=Prod"
+          
+          echo "Deploying rds_stack"
+          bash scripts/deploy_stack.sh "rds-stack" "cfn/rds_stack.yml" "cfn/parameters/rds_params.json" "Environment=Prod"
+          
+          echo "Deploying lambda_stack"
+          bash scripts/deploy_stack.sh "lambda-stack" "cfn/lambda_stack.yml" "cfn/parameters/lambda_params.json" "Environment=Prod"
