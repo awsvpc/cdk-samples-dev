@@ -1,0 +1,9 @@
+userdata: |
+  <powershell>
+  Write-Output "Running Windows EC2 UserData..."
+  # Install AWS CLI
+  Invoke-WebRequest https://awscli.amazonaws.com/AWSCLIV2.msi -OutFile AWSCLIV2.msi
+  Start-Process msiexec.exe -ArgumentList '/i AWSCLIV2.msi /quiet' -Wait
+  # Run cfn-init to install Chrome
+  cfn-init.exe -v -c default -s ${AWS::StackName} -r WindowsInstance
+  </powershell>
