@@ -1,0 +1,79 @@
+name: Deploy CloudFormation
+
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: 'Target stack to deploy (base/lambda/rds/all)'
+        required: true
+        default: 'all'
+      environment:
+        description: 'Environment value for tags'
+        required: true
+        default: 'Dev'
+      aws-region:
+        description: 'AWS Region'
+        required: false
+        default: 'us-east-1'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.aws-region }}
+
+      - name: Set stack order
+        id: stacks
+        run: |
+          STACK_INPUT="${{ github.event.inputs.stack }}"
+          ENV_TAG="${{ github.event.inputs.environment }}"
+          declare -a STACK_ORDER
+
+          if [[ "$STACK_INPUT" == "all" ]]; then
+            STACK_ORDER=("base" "rds" "lambda")
+          else
+            STACK_ORDER=($STACK_INPUT)
+          fi
+
+          # Export as environment variables for next step
+          echo "STACK_ORDER=${STACK_ORDER[*]}" >> $GITHUB_ENV
+          echo "ENV_TAG=$ENV_TAG" >> $GITHUB_ENV
+
+      - name: Deploy stacks
+        run: |
+          for stack in $STACK_ORDER; do
+            echo "Deploying stack: $stack"
+
+            case "$stack" in
+              base)
+                TEMPLATE="cfn/base_stack.yml"
+                PARAMS="cfn/parameters/base_params.json"
+                ;;
+              rds)
+                TEMPLATE="cfn/rds_stack.yml"
+                PARAMS="cfn/parameters/rds_params.json"
+                ;;
+              lambda)
+                TEMPLATE="cfn/lambda_stack.yml"
+                PARAMS="cfn/parameters/lambda_params.json"
+                ;;
+              *)
+                echo "Unknown stack $stack"
+                exit 1
+                ;;
+            esac
+
+            STACK_NAME="${stack}-stack"
+            TAGS="Environment=$ENV_TAG Project=MyApp"
+
+            bash scripts/deploy_stack.sh "$STACK_NAME" "$TEMPLATE" "$PARAMS" "$TAGS"
+            echo "----------------------------"
+          done
