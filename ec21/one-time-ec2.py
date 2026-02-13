@@ -50,3 +50,11 @@ class OneTimeInstanceStack(Stack):
         )
 
         instance.apply_removal_policy(cdk.RemovalPolicy.RETAIN)
+
+
+"""
+user_data = ec2.UserData.for_windows()
+user_data.add_commands(
+    "powershell Install-WindowsFeature -name Web-Server"
+)
+"""
