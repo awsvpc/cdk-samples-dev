@@ -1,3 +1,4 @@
+<pre>
 cdk_project/
 │
 ├─ app.py
@@ -13,3 +14,4 @@ cdk_project/
 └─ userdata/
     ├─ dev_windows_userdata.yml
     ├─ dev_linux_userdata.sh
+</pre>
