@@ -1,0 +1,17 @@
+      - name: Deploy stack
+        run: |
+          # Prepare tags dynamically
+          TAGS="Environment=${{ github.event.inputs.environment }} Project=MyApp"
+
+          # Call the deploy script
+          bash scripts/deploy_stack.sh "$STACK_NAME" "$TEMPLATE" "$PARAMS" "$TAGS"
+
+================
+In the deploy_stack.sh script, notice this line:
+
+${TAGS:+--tags $TAGS}
+
+
+$TAGS can be any string of tags in the format:
+
+Key=Environment,Value=Dev Key=Project,Value=MyApp
