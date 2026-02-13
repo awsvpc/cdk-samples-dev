@@ -1,0 +1,51 @@
+from aws_cdk import (
+    Stack,
+    pipelines,
+    aws_codebuild as codebuild,
+)
+from constructs import Construct
+
+class CdkPipelineStack(Stack):
+
+    def __init__(self, scope: Construct, id: str, **kwargs):
+        super().__init__(scope, id, **kwargs)
+
+        # 1️⃣ Define pipeline
+        pipeline = pipelines.CodePipeline(
+            self,
+            "Pipeline",
+            synth=pipelines.CodeBuildStep(
+                "Synth",
+                input=pipelines.CodePipelineSource.git_hub(
+                    "myorg/my-cdk-repo",  # Replace with GitHub repo
+                    "main",                # Branch
+                    authentication=cdk.SecretValue.secrets_manager("github-token") 
+                ),
+                install_commands=[
+                    "python -m pip install --upgrade pip",
+                    "pip install -r requirements.txt",
+                    "npm install -g aws-cdk"
+                ],
+                commands=[
+                    "cdk synth"
+                ],
+                primary_output_directory="cdk.out"
+            )
+        )
+
+        # 2️⃣ Add stages for stacks
+        pipeline.add_stage(
+            PostgresRdsStack(
+                self,
+                "DeployPostgresRds",
+                env=cdk.Environment(account="111111111111", region="us-east-1")
+            )
+        )
+
+        pipeline.add_stage(
+            AuroraPostgresStack(
+                self,
+                "DeployAurora",
+                env=cdk.Environment(account="111111111111", region="us-east-1")
+            )
+        )
