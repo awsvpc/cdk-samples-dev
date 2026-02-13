@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = "us-east-1"
+        AWS_ACCOUNT = "111111111111"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/myorg/my-cdk-repo.git'
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                // Install Node.js, Python, CDK
+                sh '''
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+                    apt-get install -y nodejs python3-pip
+                    npm install -g aws-cdk
+                    pip3 install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Configure AWS') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds-id'
+                ]]) {
+                    sh 'aws sts get-caller-identity'
+                }
+            }
+        }
+
+        stage('CDK Synth') {
+            steps {
+                sh 'cdk synth'
+            }
+        }
+
+        stage('CDK Deploy RDS') {
+            steps {
+                sh 'cdk deploy PostgresRdsStack --require-approval never'
+            }
+        }
+
+        stage('CDK Deploy Aurora') {
+            steps {
+                sh 'cdk deploy AuroraPostgresStack --require-approval never'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CDK deployment succeeded!"
+        }
+        failure {
+            echo "CDK deployment failed."
+        }
+    }
+}
