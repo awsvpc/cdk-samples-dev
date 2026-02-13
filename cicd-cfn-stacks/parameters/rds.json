@@ -1,0 +1,20 @@
+{
+  "DBName": "myappdb",
+  "DBUser": "adminuser",
+  "DBPassword": "SuperSecret123!",
+  "DBInstanceClass": "db.t3.medium",
+  "DBAllocatedStorage": "20",
+  "VPCSecurityGroupIds": "sg-0abc1234def567890",
+  "DBSubnetGroupName": "myapp-db-subnet-group",
+  "MultiAZ": "false",
+  "Engine": "mysql",
+  "EngineVersion": "8.0",
+  "StorageType": "gp3",
+  "BackupRetentionPeriod": "7",
+  "PubliclyAccessible": "false",
+  "DeletionProtection": "true",
+  "Tags": [
+    { "Key": "Environment", "Value": "Dev" },
+    { "Key": "Project", "Value": "MyApp" }
+  ]
+}
