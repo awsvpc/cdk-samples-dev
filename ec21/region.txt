@@ -1,0 +1,21 @@
+from aws_cdk import Stack
+from constructs import Construct
+
+class MyStack(Stack):
+    def __init__(self, scope: Construct, id: str, **kwargs):
+        super().__init__(scope, id, **kwargs)
+
+        if self.region != "us-east-1":
+            raise ValueError("This stack can only be deployed in us-east-1")
+=============
+limit context
+env_name = app.node.try_get_context("env")
+region_name = app.node.try_get_context("region")
+
+PostgresRdsStack(
+    app,
+    f"Postgres-{env_name}",
+    env=Environment(account="123456789012", region=region_name)
+)
+
+cdk deploy -c env=dev -c region=us-east-1
