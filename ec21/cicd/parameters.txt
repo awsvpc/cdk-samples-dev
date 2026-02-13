@@ -1,0 +1,12 @@
+parameters {
+    choice(name: 'ENV', choices: ['dev','test','prod'], description: 'Deployment environment')
+}
+...
+stage('CDK Deploy RDS') {
+    steps {
+        sh "cdk deploy PostgresRdsStack -c env=${params.ENV} --require-approval never"
+    }
+}
+
+env_name = app.node.try_get_context("env")
+PostgresRdsStack(app, f"Postgres-{env_name}", env=cdk.Environment(account="111111111111", region="us-east-1"))
