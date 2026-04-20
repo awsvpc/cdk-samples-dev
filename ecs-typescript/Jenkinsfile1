@@ -1,0 +1,27 @@
+pipeline {
+  agent any
+  stages {
+    stage('Clone') {
+      steps {
+        git 'https://github.com/alinaleem/ecs-jenkins.git'
+      }
+    }
+    stage('Build Docker Image') {
+      steps {
+        sh 'docker build -t hello-world-app .'
+      }
+    }
+    stage('Push to ECR') {
+      steps {
+        sh './ecr_login.sh'
+        sh 'docker tag hello-world-app <account-id>.dkr.ecr.<region>.amazonaws.com/hello-world-app:latest'
+        sh 'docker push <ECR_URI>'
+      }
+    }
+    stage('Deploy to ECS') {
+      steps {
+        sh 'aws ecs update-service --cluster my-cluster --service my-service --force-new-deployment'
+      }
+    }
+  }
+}
