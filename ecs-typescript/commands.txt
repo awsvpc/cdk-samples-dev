@@ -1,0 +1,57 @@
+# sed -e "s;%BUILD_NUMBER%;0;g" flask-signup.json > flask-signup-v_0.json
+# aws ecs register-task-definition --cli-input-json file://flask-signup-v_0.json
+{
+"taskDefinition": {
+    "volumes": [],
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:123456789012:task-definition/flask-signup:1",
+    "containerDefinitions": [
+        {
+            "name": "flask-signup",
+            "image": "your-repository/flask-signup:v_0",
+            "cpu": 10,
+            "portMappings": [
+                {
+                    "containerPort": 5000,
+                    "hostPort": 80
+                }
+            ],
+            "memory": 256,
+            "essential": true
+        }
+    ],
+    "family": "flask-signup",
+    "revision": 1
+}
+}
+====================
+# aws ecs create-service --cluster default --service-name flask-signup-service --task-definition flask-signup --load-balancers loadBalancerName=elb-flask-signup-1985465812,containerName=flask-signup,containerPort=5000 --role ecs-service-role --desired-count 0
+{
+    "service": {
+        "status": "ACTIVE",
+        "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/flask-signup:1",
+        "desiredCount": 0,
+        "serviceName": "flask-signup-service",
+        "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/default",
+        "serviceArn": "arn:aws:ecs:us-east-1:123456789012:service/flask-signup-service",
+        "runningCount": 0
+    }
+}  
+===================
+
+#!/bin/bash
+SERVICE_NAME="flask-signup-service"
+IMAGE_VERSION="v_"${BUILD_NUMBER}
+TASK_FAMILY="flask-signup"
+
+# Create a new task definition for this build
+sed -e "s;%BUILD_NUMBER%;${BUILD_NUMBER};g" flask-signup.json > flask-signup-v_${BUILD_NUMBER}.json
+aws ecs register-task-definition --family flask-signup --cli-input-json file://flask-signup-v_${BUILD_NUMBER}.json
+
+# Update the service with the new task definition and desired count
+TASK_REVISION=`aws ecs describe-task-definition --task-definition flask-signup | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`
+DESIRED_COUNT=`aws ecs describe-services --services ${SERVICE_NAME} | egrep "desiredCount" | tr "/" " " | awk '{print $2}' | sed 's/,$//'`
+if [ ${DESIRED_COUNT} = "0" ]; then
+    DESIRED_COUNT="1"
+fi
+
+aws ecs update-service --cluster default --service ${SERVICE_NAME} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --desired-count ${DESIRED_COUNT}
